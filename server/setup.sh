@@ -1,0 +1,96 @@
+#!/bin/bash
+
+export USER_PSWD
+export ROOT_PSWD
+NET=nx
+PORT=8080
+DB_NAME=nextcloud
+
+USER=admin
+MARIA_NAME=maria
+PODMAN_COMMON="--detach --security-opt label=disable --network $NET --restart=unless-stopped" #--restart on-failure
+
+function renew_clean(){
+  local IMAGE=$1
+  local NAME=$2
+  echo ">>> Cleanup $NAME"
+  podman pull ${IMAGE}
+  podman stop ${NAME}
+  podman rm ${NAME}
+}
+
+function podman_mariaDB(){
+  local VOLUME=$1
+  local NAME=$MARIA_NAME
+  local IMAGE=mariadb #:10
+  local DBS=$DB_NAME
+  renew_clean ${IMAGE} ${NAME}
+  podman run $PODMAN_COMMON \
+    --env MYSQL_DATABASE=${DBS} \
+    --env MYSQL_USER=${DBS} \
+    --env MYSQL_PASSWORD=${USER_PSWD} \
+    --env MYSQL_ROOT_PASSWORD=${ROOT_PSWD} \
+    --volume ${VOLUME}:/var/lib/mysql:Z \
+    --name ${NAME} \
+    docker.io/library/${IMAGE}
+}
+
+function podman_nextcloud(){
+  local VOLUME_APP=$1
+  local VOLUME_DATA=$2
+
+  local NAME=nextcloud
+  local IMAGE=$NAME # :20
+  local DB_HOST=${MARIA_NAME}.dns.podman
+  local NX_ADMIN=$USER
+  local NX_PSWD=$DB_PASSWORD
+  renew_clean ${IMAGE} ${NAME}
+  podman run $PODMAN_COMMON \
+    --env MYSQL_HOST=$DB_HOST \
+    --env MYSQL_DATABASE=$DB_NAME \
+    --env MYSQL_USER=$DB_NAME \
+    --env MYSQL_PASSWORD=$USER_PSWD \
+    --env NEXTCLOUD_ADMIN_USER=$NX_ADMIN \
+    --env NEXTCLOUD_ADMIN_PASSWORD=$USER_PSWD \
+    --volume $VOLUME_APP:/var/www/html:Z \
+    --volume $VOLUME_DATA:/var/www/html/data:Z \
+    --name $NAME \
+    --publish ${PORT}:80 \
+    docker.io/library/$IMAGE
+}
+
+function podman_homeassistant(){
+  local NAME=hass
+  local IMAGE=homeassistant/home-assistant:stable
+  #local IMAGE=homeassistant/raspberrypi4-homeassistant:stable
+  local VOLUME=$1
+  renew_clean ${IMAGE} ${NAME}
+  podman run $PODMAN_COMMON \
+    --volume /etc/localtime:/etc/localtime:ro \
+    --volume $VOLUME:/config:Z \
+    --name $NAME \
+    --network=host \
+    $IMAGE
+}
+  
+
+function start(){
+  ROOT_PSWD=${USER_PSWD}
+  local TARGET_PATH=$1
+  if [ -z "$TARGET_PATH" ]; then
+    TARGET_PATH="$(pwd)"
+  fi
+  echo ">>> Using Path: $TARGET_PATH"
+  mkdir $TARGET_PATH/volume_maria $TARGET_PATH/volume_nx_app $TARGET_PATH/volume_nx_data $TARGET_PATH/volume_hass
+  
+  podman network create $NET
+  podman_mariaDB $TARGET_PATH/volume_maria
+  podman_nextcloud $TARGET_PATH/volume_nx_app $TARGET_PATH/volume_nx_data
+  podman_homeassistant $TARGET_PATH/volume_hass
+  
+}
+
+USER_PSWD="$1"
+TARGET_PATH="$2"
+
+start "$TARGET_PATH"
