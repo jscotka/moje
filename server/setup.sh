@@ -90,7 +90,19 @@ function start(){
   
 }
 
+function nx_rescan(){
+  local USER=$1
+  local NX_USER=www-data
+  if [ -z "$USER" ]; then
+    USER="--all"
+  fi
+  local NAME=nextcloud
+  podman exec -ti --user $NX_USER $NAME /var/www/html/occ files:scan $USER
+}
+
 USER_PSWD="$1"
 TARGET_PATH="$2"
 
-start "$TARGET_PATH"
+if [ -n "$USER_PSWD" ]; then
+   start "$TARGET_PATH"
+fi
