@@ -24,7 +24,7 @@ function podman_mariaDB(){
   local NAME=$MARIA_NAME
   local IMAGE=mariadb #:10
   local DBS=$DB_NAME
-  renew_clean ${IMAGE} ${NAME}
+  #renew_clean ${IMAGE} ${NAME}
   podman run $PODMAN_COMMON \
     --env MYSQL_DATABASE=${DBS} \
     --env MYSQL_USER=${DBS} \
@@ -44,7 +44,7 @@ function podman_nextcloud(){
   local DB_HOST=${MARIA_NAME}.dns.podman
   local NX_ADMIN=$USER
   local NX_PSWD=$DB_PASSWORD
-  renew_clean ${IMAGE} ${NAME}
+  #renew_clean ${IMAGE} ${NAME}
   podman run $PODMAN_COMMON \
     --env MYSQL_HOST=$DB_HOST \
     --env MYSQL_DATABASE=$DB_NAME \
