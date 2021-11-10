@@ -8,7 +8,7 @@ DB_NAME=nextcloud
 
 USER=admin
 MARIA_NAME=maria
-PODMAN_COMMON="--detach --security-opt label=disable --network $NET --restart=unless-stopped" #--restart on-failure
+PODMAN_COMMON="--detach --security-opt label=disable --restart=unless-stopped" #--network $NET  --restart on-failure
 
 function renew_clean(){
   local IMAGE=$1
@@ -24,6 +24,7 @@ function podman_mariaDB(){
   local NAME=$MARIA_NAME
   local IMAGE=mariadb #:10
   local DBS=$DB_NAME
+  local DB_PORT=3306
   #renew_clean ${IMAGE} ${NAME}
   podman run $PODMAN_COMMON \
     --env MYSQL_DATABASE=${DBS} \
@@ -32,6 +33,7 @@ function podman_mariaDB(){
     --env MYSQL_ROOT_PASSWORD=${ROOT_PSWD} \
     --volume ${VOLUME}:/var/lib/mysql:Z \
     --name ${NAME} \
+    --publish ${DB_PORT}:${DB_PORT} \
     ${IMAGE}
 }
 
@@ -83,7 +85,7 @@ function start(){
   echo ">>> Using Path: $TARGET_PATH"
   mkdir $TARGET_PATH/volume_maria $TARGET_PATH/volume_nx_app $TARGET_PATH/volume_nx_data $TARGET_PATH/volume_hass
   
-  podman network create $NET
+  #podman network create $NET
   podman_mariaDB $TARGET_PATH/volume_maria
   podman_nextcloud $TARGET_PATH/volume_nx_app $TARGET_PATH/volume_nx_data
   podman_homeassistant $TARGET_PATH/volume_hass
