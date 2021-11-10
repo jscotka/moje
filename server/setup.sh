@@ -101,7 +101,7 @@ function nx_rescan(){
 }
 
 function create_image_mariadb(){
-  git clone git@github.com:jscotka/mariadb-docker.git docker-mariadb
+  git clone https://github.com/jscotka/mariadb-docker.git docker-mariadb
   (
     cd docker-mariadb
     podman build -t mariadb -f 10.3/Dockerfile
@@ -109,7 +109,7 @@ function create_image_mariadb(){
 }
 
 function create_image_nextcloud(){
-  git clone git@github.com:jscotka/nextcloud-docker.git docker-nextcloud
+  git clone https://github.com/jscotka/nextcloud-docker.git docker-nextcloud
   (
     cd docker-nextcloud
     podman build -t nextcloud -f 22/apache/Dockerfile
