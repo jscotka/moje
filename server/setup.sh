@@ -33,9 +33,8 @@ function podman_mariaDB(){
     --env MYSQL_ROOT_PASSWORD=${ROOT_PSWD} \
     --volume ${VOLUME}:/var/lib/mysql:Z \
     --name ${NAME} \
-    --network 
-    --publish ${DB_PORT}:${DB_PORT} \
     ${IMAGE}
+  #     --publish ${DB_PORT}:${DB_PORT} \
 }
 
 function podman_nextcloud(){
