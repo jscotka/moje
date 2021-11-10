@@ -33,7 +33,7 @@ function podman_mariaDB(){
     --env MYSQL_ROOT_PASSWORD=${ROOT_PSWD} \
     --volume ${VOLUME}:/var/lib/mysql:Z \
     --name ${NAME} \
-    --publish ${DB_PORT}:${DB_PORT} \
+    --network host
     ${IMAGE}
 }
 
@@ -43,7 +43,7 @@ function podman_nextcloud(){
 
   local NAME=nextcloud
   local IMAGE=$NAME # :20
-  local DB_HOST=localhost
+  local DB_HOST=192.168.5.79:3306
   local NX_ADMIN=$USER
   local NX_PSWD=$DB_PASSWORD
   #renew_clean ${IMAGE} ${NAME}
