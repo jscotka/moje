@@ -8,7 +8,7 @@ DB_NAME=nextcloud
 
 USER=admin
 MARIA_NAME=maria
-PODMAN_COMMON="--detach --security-opt label=disable --restart=unless-stopped" #--network $NET  --restart on-failure
+PODMAN_COMMON="--detach --security-opt label=disable --restart=unless-stopped --network $NET" #  --restart on-failure
 
 function renew_clean(){
   local IMAGE=$1
@@ -33,7 +33,8 @@ function podman_mariaDB(){
     --env MYSQL_ROOT_PASSWORD=${ROOT_PSWD} \
     --volume ${VOLUME}:/var/lib/mysql:Z \
     --name ${NAME} \
-    --network host
+    --network 
+    --publish ${DB_PORT}:${DB_PORT} \
     ${IMAGE}
 }
 
@@ -43,7 +44,7 @@ function podman_nextcloud(){
 
   local NAME=nextcloud
   local IMAGE=$NAME # :20
-  local DB_HOST=192.168.5.79:3306
+  local DB_HOST=localhost
   local NX_ADMIN=$USER
   local NX_PSWD=$DB_PASSWORD
   #renew_clean ${IMAGE} ${NAME}
