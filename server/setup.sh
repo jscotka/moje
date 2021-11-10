@@ -62,7 +62,7 @@ function podman_nextcloud(){
 function podman_homeassistant(){
   local NAME=hass
   #local IMAGE=homeassistant/home-assistant:stable
-  local IMAGE=homeassistant/raspberrypi4-homeassistant:stable
+  local IMAGE=docker.io/library/homeassistant/raspberrypi4-homeassistant:stable
   local VOLUME=$1
   renew_clean ${IMAGE} ${NAME}
   podman run $PODMAN_COMMON \
