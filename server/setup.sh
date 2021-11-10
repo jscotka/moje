@@ -61,8 +61,8 @@ function podman_nextcloud(){
 
 function podman_homeassistant(){
   local NAME=hass
-  local IMAGE=homeassistant/home-assistant:stable
-  #local IMAGE=homeassistant/raspberrypi4-homeassistant:stable
+  #local IMAGE=homeassistant/home-assistant:stable
+  local IMAGE=homeassistant/raspberrypi4-homeassistant:stable
   local VOLUME=$1
   renew_clean ${IMAGE} ${NAME}
   podman run $PODMAN_COMMON \
@@ -99,6 +99,23 @@ function nx_rescan(){
   local NAME=nextcloud
   podman exec -ti --user $NX_USER $NAME /var/www/html/occ files:scan $USER
 }
+
+function create_image_mariadb(){
+  git clone git@github.com:jscotka/mariadb-docker.git docker-mariadb
+  (
+    cd docker-mariadb
+    podman build -t mariadb -f 10.3/Dockerfile
+  )
+}
+
+function create_image_nextcloud(){
+  git clone git@github.com:jscotka/nextcloud-docker.git docker-nextcloud
+  (
+    cd docker-nextcloud
+    podman build -t nextcloud -f 22/apache/Dockerfile
+  )
+}
+
 
 USER_PSWD="$1"
 TARGET_PATH="$2"
