@@ -32,7 +32,7 @@ function podman_mariaDB(){
     --env MYSQL_ROOT_PASSWORD=${ROOT_PSWD} \
     --volume ${VOLUME}:/var/lib/mysql:Z \
     --name ${NAME} \
-    docker.io/library/${IMAGE}
+    ${IMAGE}
 }
 
 function podman_nextcloud(){
@@ -56,7 +56,7 @@ function podman_nextcloud(){
     --volume $VOLUME_DATA:/var/www/html/data:Z \
     --name $NAME \
     --publish ${PORT}:80 \
-    docker.io/library/$IMAGE
+    $IMAGE
 }
 
 function podman_homeassistant(){
