@@ -44,7 +44,7 @@ function podman_nextcloud(){
 
   local NAME=nextcloud
   local IMAGE=$NAME # :20
-  local DB_HOST=localhost
+  local DB_HOST=192.168.5.79
   local NX_ADMIN=$USER
   local NX_PSWD=$DB_PASSWORD
   #renew_clean ${IMAGE} ${NAME}
