@@ -5,6 +5,7 @@ export ROOT_PSWD
 NET=nx
 PORT=8080
 DB_NAME=nextcloud
+IP_ADDR=$(hostname -I)
 
 USER=admin
 MARIA_NAME=maria
@@ -44,9 +45,9 @@ function podman_nextcloud(){
 
   local NAME=nextcloud
   local IMAGE=$NAME # :20
-  local DB_HOST=192.168.5.79
+  local DB_HOST=$IP_ADDR
   local NX_ADMIN=$USER
-  local NX_PSWD=$DB_PASSWORD
+  local NX_PSWD=$USER_PSWD
   #renew_clean ${IMAGE} ${NAME}
   podman run $PODMAN_COMMON \
     --env MYSQL_HOST=$DB_HOST \
@@ -54,7 +55,7 @@ function podman_nextcloud(){
     --env MYSQL_USER=$DB_NAME \
     --env MYSQL_PASSWORD=$USER_PSWD \
     --env NEXTCLOUD_ADMIN_USER=$NX_ADMIN \
-    --env NEXTCLOUD_ADMIN_PASSWORD=$USER_PSWD \
+    --env NEXTCLOUD_ADMIN_PASSWORD=$NX_PSWD \
     --volume $VOLUME_APP:/var/www/html:Z \
     --volume $VOLUME_DATA:/var/www/html/data:Z \
     --name $NAME \
@@ -65,7 +66,7 @@ function podman_nextcloud(){
 function podman_homeassistant(){
   local NAME=hass
   #local IMAGE=homeassistant/home-assistant:stable
-  local IMAGE=docker.io/library/homeassistant/raspberrypi4-homeassistant:stable
+  local IMAGE=docker.io/homeassistant/raspberrypi4-homeassistant:stable
   local VOLUME=$1
   renew_clean ${IMAGE} ${NAME}
   podman run $PODMAN_COMMON \
