@@ -118,8 +118,27 @@ function create_image_nextcloud(){
     cd docker-nextcloud
     podman build -t nextcloud -f 22/apache/Dockerfile
   )
-}
 
+function nextcloud_prepare {
+  local WHERE=${1}/haproxy
+  popd $WHERE
+  echo "
+frontend localhost
+    bind *:8443 ssl crt /usr/local/etc/haproxy/haproxy.pem
+    mode http
+    default_backend nodes
+
+backend nodes
+    mode http
+    balance roundrobin
+    server web01 $IP_ADDR:8080
+  " > haproxy.cfg
+  openssl genrsa -out haproxy.key 1024
+  openssl req -new -key haproxy.key -out haproxy.csr
+  openssl x509 -req -days 365 -in haproxy.csr -signkey haproxy.key -out haproxy.crt
+  cat haproxy.crt haproxy.key > haproxy.pem
+  # podman run -p 8443:8443 -v $WHERE:/usr/local/etc/haproxy:Z  docker.io/library/haproxy
+}
 
 USER_PSWD="$1"
 TARGET_PATH="$2"
