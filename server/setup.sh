@@ -120,7 +120,7 @@ function create_image_nextcloud(){
   )
 }
 
-function nextcloud_prepare() {
+function haproxy_prepare() {
   local WHERE=${1}/haproxy
   popd $WHERE
   echo "
