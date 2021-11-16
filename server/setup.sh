@@ -151,11 +151,11 @@ backend nextcloud
     mode http
     http-request set-header X-Forwarded-Port %[dst_port]
     http-request add-header X-Forwarded-Proto https if { ssl_fc }
-    reqrep ^([^\ :]*)\ /(.*)     \1\ /\2
+    #reqrep ^([^\ :]*)\ /(.*)     \1\ /\2
     acl response-is-redirect res.hdr(Location) -m found
     # Must combine following two lines into a SINGLE LINE for HAProxy
-    rspirep ^Location:\ (http)://$IP_ADDR:8080/(.*)
-            Location:\ https://$IP_ADDR:8443/\2 if response-is-redirect
+    #rspirep ^Location:\ (http)://$IP_ADDR:8080/(.*)
+    #        Location:\ https://$IP_ADDR:8443/\2 if response-is-redirect
   " > haproxy.cfg
   openssl genrsa -out haproxy.key 1024
   openssl req -new -key haproxy.key -out haproxy.csr
