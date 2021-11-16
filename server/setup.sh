@@ -122,7 +122,8 @@ function create_image_nextcloud(){
 
 function haproxy_prepare() {
   local WHERE=${1}/haproxy
-  popd $WHERE
+  mkdir -p $WHERE
+  pushd $WHERE
   echo "
 frontend localhost
     bind *:8443 ssl crt /usr/local/etc/haproxy/haproxy.pem
@@ -139,7 +140,7 @@ backend nodes
   openssl x509 -req -days 365 -in haproxy.csr -signkey haproxy.key -out haproxy.crt
   cat haproxy.crt haproxy.key > haproxy.pem
   # podman run -p 8443:8443 -v $WHERE:/usr/local/etc/haproxy:Z  docker.io/library/haproxy
-  pushd
+  popd
 }
 
 USER_PSWD="$1"
