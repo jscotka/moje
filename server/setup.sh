@@ -118,8 +118,9 @@ function create_image_nextcloud(){
     cd docker-nextcloud
     podman build -t nextcloud -f 22/apache/Dockerfile
   )
+}
 
-function nextcloud_prepare {
+function nextcloud_prepare() {
   local WHERE=${1}/haproxy
   popd $WHERE
   echo "
@@ -138,6 +139,7 @@ backend nodes
   openssl x509 -req -days 365 -in haproxy.csr -signkey haproxy.key -out haproxy.crt
   cat haproxy.crt haproxy.key > haproxy.pem
   # podman run -p 8443:8443 -v $WHERE:/usr/local/etc/haproxy:Z  docker.io/library/haproxy
+  pushd
 }
 
 USER_PSWD="$1"
