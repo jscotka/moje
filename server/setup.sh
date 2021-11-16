@@ -135,11 +135,7 @@ defaults
 
 frontend localhost
     bind *:8443 ssl crt /usr/local/etc/haproxy/haproxy.pem
-    option forwardfor
-    reqadd X-Forwarded-Proto:\ https
-    reqadd X-Forwarded-Port:\ 443
-    option forwardfor if-none
-    mode http
+    mode https
     default_backend nodes
 
 backend nodes
