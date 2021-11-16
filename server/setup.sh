@@ -125,6 +125,14 @@ function haproxy_prepare() {
   mkdir -p $WHERE
   pushd $WHERE
   echo "
+defaults
+    option  http-keep-alive
+    timeout connect         5s
+    timeout client          50s
+    timeout server          50s
+    timeout http-keep-alive 50s
+    timeout http-request    30s
+
 frontend localhost
     bind *:8443 ssl crt /usr/local/etc/haproxy/haproxy.pem
     mode http
@@ -133,13 +141,13 @@ frontend localhost
 backend nodes
     mode http
     balance roundrobin
-    server web01 $IP_ADDR:8080
+    server web01 $IP_ADDR:8080 check
   " > haproxy.cfg
   openssl genrsa -out haproxy.key 1024
   openssl req -new -key haproxy.key -out haproxy.csr
   openssl x509 -req -days 365 -in haproxy.csr -signkey haproxy.key -out haproxy.crt
   cat haproxy.crt haproxy.key > haproxy.pem
-  # podman run -p 8443:8443 -v $WHERE:/usr/local/etc/haproxy:Z  docker.io/library/haproxy
+  # podman run --rm -p 8443:8443 -v $WHERE:/usr/local/etc/haproxy:Z  docker.io/library/haproxy
   popd
 }
 
