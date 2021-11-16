@@ -5,7 +5,7 @@ export ROOT_PSWD
 NET=nx
 PORT=8080
 DB_NAME=nextcloud
-IP_ADDR=$(hostname -I)
+IP_ADDR=$(hostname -I | sed 's/ //g')
 
 USER=admin
 MARIA_NAME=maria
@@ -125,23 +125,37 @@ function haproxy_prepare() {
   mkdir -p $WHERE
   pushd $WHERE
   echo "
+global
+    maxconn 4096
+    log 127.0.0.1 local0 debug
+
 defaults
-    option  http-keep-alive
-    timeout connect         5s
-    timeout client          50s
-    timeout server          50s
-    timeout http-keep-alive 50s
-    timeout http-request    30s
+   log global
+   option httplog
+   option dontlognull
+   option forwardfor
+   maxconn 20
+   timeout connect 5s
+   timeout client 5min
+   timeout server 5min
 
-frontend localhost
+frontend http-in
+    bind *:8081
     bind *:8443 ssl crt /usr/local/etc/haproxy/haproxy.pem
-    mode https
-    default_backend nodes
-
-backend nodes
     mode http
-    balance roundrobin
-    server web01 $IP_ADDR:8080 check
+    redirect scheme https if !{ ssl_fc } # Redirect http requests to https
+    use_backend nextcloud
+
+backend nextcloud
+    server nx1 $IP_ADDR:8080
+    mode http
+    http-request set-header X-Forwarded-Port %[dst_port]
+    http-request add-header X-Forwarded-Proto https if { ssl_fc }
+    reqrep ^([^\ :]*)\ /(.*)     \1\ /\2
+    acl response-is-redirect res.hdr(Location) -m found
+    # Must combine following two lines into a SINGLE LINE for HAProxy
+    rspirep ^Location:\ (http)://$IP_ADDR:8080/(.*)
+            Location:\ https://$IP_ADDR:8443/\2 if response-is-redirect
   " > haproxy.cfg
   openssl genrsa -out haproxy.key 1024
   openssl req -new -key haproxy.key -out haproxy.csr
