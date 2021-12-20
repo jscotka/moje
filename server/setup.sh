@@ -9,7 +9,7 @@ IP_ADDR=$(hostname -I | sed 's/ //g')
 
 USER=admin
 MARIA_NAME=maria
-PODMAN_COMMON="--detach --security-opt label=disable --restart=unless-stopped " #--network $NET  --restart on-failure
+PODMAN_COMMON="--detach --security-opt label=disable " #--restart=unless-stopped --network $NET  --restart on-failure
 
 function renew_clean(){
   local IMAGE=$1
@@ -120,48 +120,47 @@ function create_image_nextcloud(){
   )
 }
 
-function haproxy_prepare() {
-  local WHERE=${1}/haproxy
+function nginx_proxy() {
+  local WHERE=${1}/nginx
   mkdir -p $WHERE
   pushd $WHERE
+  echo '
+server {
+	listen 8443 ssl;
+	server_name scottyh;
+
+	access_log /var/log/nginx/cloud.example.com.access.log;
+	error_log /var/log/nginx/cloud.example.com.error.log;
+
+	client_max_body_size 0;
+	underscores_in_headers on;
+
+	ssl on;
+	ssl_certificate /etc/ssl/certs/server.crt;
+	ssl_certificate_key /etc/ssl/certs/server.key;
+
+	ssl_stapling on;
+	ssl_stapling_verify on;
+
+	location / {
+		proxy_headers_hash_max_size 512;
+		proxy_headers_hash_bucket_size 64;
+		proxy_set_header Host $host;
+		proxy_set_header X-Forwarded-Proto $scheme;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+  ' > nginx.conf
   echo "
-global
-    maxconn 4096
-    log 127.0.0.1 local0 debug
+		add_header Front-End-Https on;
+		# whatever the IP of your cloud server is
+		proxy_pass http://$IP_ADDR:8080;
+	}
+}
+  " >> nginx.conf
+  openssl req -x509 -nodes -days 365 -subj "/C=CA/ST=QC/O=Scotty, Inc./CN=scottyh" -addext "subjectAltName=DNS:scottyh" -newkey rsa:2048 -keyout nginx-selfsigned.key -out nginx-selfsigned.crt
 
-defaults
-   log global
-   option httplog
-   option dontlognull
-   option forwardfor
-   maxconn 20
-   timeout connect 5s
-   timeout client 5min
-   timeout server 5min
-
-frontend http-in
-    bind *:8081
-    bind *:8443 ssl crt /usr/local/etc/haproxy/haproxy.pem
-    mode http
-    redirect scheme https if !{ ssl_fc } # Redirect http requests to https
-    use_backend nextcloud
-
-backend nextcloud
-    server nx1 $IP_ADDR:8080
-    mode http
-    http-request set-header X-Forwarded-Port %[dst_port]
-    http-request add-header X-Forwarded-Proto https if { ssl_fc }
-    #reqrep ^([^\ :]*)\ /(.*)     \1\ /\2
-    acl response-is-redirect res.hdr(Location) -m found
-    # Must combine following two lines into a SINGLE LINE for HAProxy
-    #rspirep ^Location:\ (http)://$IP_ADDR:8080/(.*)
-    #        Location:\ https://$IP_ADDR:8443/\2 if response-is-redirect
-  " > haproxy.cfg
-  openssl genrsa -out haproxy.key 1024
-  openssl req -new -key haproxy.key -out haproxy.csr
-  openssl x509 -req -days 365 -in haproxy.csr -signkey haproxy.key -out haproxy.crt
-  cat haproxy.crt haproxy.key > haproxy.pem
-  # podman run --rm -p 8443:8443 -v $WHERE:/usr/local/etc/haproxy:Z  docker.io/library/haproxy
+  podman run --rm -p 8443:8443 -v `pwd`/nginx.conf:/etc/nginx/default.conf:ro -v `pwd`/nginx-selfsigned.crt:/etc/ssl/certs/server.crt -v `pwd`/nginx-selfsigned.key:/etc/ssl/certs/server.key docker.io/library/nginx
   popd
 }
 
