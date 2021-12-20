@@ -9,7 +9,7 @@ IP_ADDR=$(hostname -I | sed 's/ //g')
 
 USER=admin
 MARIA_NAME=maria
-PODMAN_COMMON="--detach --security-opt label=disable " #--restart=unless-stopped --network $NET  --restart on-failure
+PODMAN_COMMON="--rm --detach --security-opt label=disable --restart=unless-stopped" # --network $NET  --restart on-failure
 
 function renew_clean(){
   local IMAGE=$1
